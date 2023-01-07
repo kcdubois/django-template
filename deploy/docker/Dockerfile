@@ -1,19 +1,28 @@
-FROM python:3.10.8 as builder
+FROM python:3.10.8-slim as base
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-WORKDIR /wheels
+WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     build-essential gcc python3-dev musl-dev \
-    postgresql-server-dev-all libintl-perl gettext
+    postgresql-server-dev-all libintl-perl gettext &&\
+    pip install pipenv
 
-RUN pip install pipenv
 COPY Pipfile Pipfile.lock ./
-RUN pipenv lock -r > requirements.txt
 
-RUN pip wheel -r requirements.txt
+
+FROM base as development
+RUN pipenv sync --system --dev
+COPY app .
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
+
+FROM base as builder
+RUN mkdir /wheels && \
+    pipenv requirements > /wheels/requirements.txt && \
+    pip wheel -r /wheels/requirements.txt -w /wheels
 
 
 FROM python:3.10.8-slim
@@ -23,9 +32,11 @@ RUN pip install --no-index -r /wheels/requirements.txt -f /wheels
 
 RUN rm -rf /wheels
 
-COPY ./scripts/entrypoint.py /usr/bin/
+COPY ./deploy/scripts/docker-entrypoint.sh /docker-entrypoint.sh
 WORKDIR /app
 COPY app .
 
-ENTRYPOINT ["/usr/bin/entrypoint.py"]
+EXPOSE 8000
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["gunicorn", "-b 0.0.0.0:8000", "-w 3", "app.wsgi"]
