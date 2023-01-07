@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block 'main' %}
+<div class="row align-center py-4">
+        <h3>Login to {{ site }}</h3>
+        {% if form.errors %}
+        <p>Your username and password didn't match. Please try again.</p>
+        {% endif %}
+        
+        {% if next %}
+            {% if user.is_authenticated %}
+            <p>Your account doesn't have access to this page. To proceed,
+            please login with an account that has access.</p>
+            {% else %}
+            <p>Please login to see this page.</p>
+            {% endif %}
+        {% endif %}
+        
+        <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+            <div class="form-group p-2">
+                <label for="{{ form.username.name }}" class="form-label">Username: </label>
+                <input 
+                    class="form-control" 
+                    placeholder="username"
+                    type="text" 
+                    name="{{ form.username.name}}" 
+                    id="{{ form.username.name }}">
+            </div>
+            <div class="form-group p-2">
+                <label for="{{ form.password.name }}" class="form-label">Password: </label>
+                <input 
+                    class="form-control" 
+                    placeholder="password"
+                    type="password" 
+                    name="{{ form.password.name}}" 
+                    id="{{ form.password.name }}">
+            </div>
+            <div class="form-group p-2">
+                <input class="btn btn-primary" type="submit" value="Login"> 
+                <a href="{% url 'password_reset' %}">Lost password?</a>
+            </div>
+            
+            <input type="hidden" name="next" value="{{ next }}">
+        </form>
+        
+        {# Assumes you set up the password_reset view in your URLconf #}
+   
+
+</div>
+
+{% endblock %}

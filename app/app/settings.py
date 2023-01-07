@@ -103,6 +103,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+LOGOUT_REDIRECT_URL = '/accounts/login'
+
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
